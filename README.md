@@ -9,8 +9,10 @@ Automatizovaný chytrý nástroj pro sledování a oceňování realitního trhu
 ## 🌟 Hlavní funkce
 
 - **🕵️‍♂️ Skrytý Scraper**: Automaticky stahuje nejnovější inzeráty přímo ze Srealit přes Playwright.
-- **🧠 AI Extrakce Dat**: Namísto spoléhání se na popisky čte AI celý text a nachází skryté informace (sklepy, balkony, stav, materiál, rizika).
+- **🧠 AI Extrakce Dat (JSON Mode)**: Namísto spoléhání se na popisky čte AI celý text a nachází skryté informace. Groq API nově garantuje 100% čistá data díky JSON módu.
 - **🧮 Vlastní oceňovací model**: Upravuje cenu za m² podle lokalizace (Cenová mapa), velikosti bytu a konkrétních parametrů.
+- **📉 Sledování historie cen**: Scraper automaticky zaznamenává zlevnění bytů a v aplikaci kreslí přehledný čárový graf vývoje ceny v čase.
+- **⚡ Extrémní optimalizace**: Playwright plošně blokuje stahování obrázků, videí a reklam, což zaručuje bleskovou rychlost stahování inzerátů.
 - **📊 Moderní Dashboard**: Skvěle vypadající tmavé rozhraní postavené na Streamlitu, které vizualizuje TOP 3 Nejlepší nákupy a odchylky v ceně.
 - **📱 Telegram Notifikace**: Integrované upozornění, které vás pípne na mobil ve chvíli, kdy AI najde "Férovou nabídku" nebo slevu.
 

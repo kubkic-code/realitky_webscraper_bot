@@ -189,10 +189,12 @@ st.markdown("""
 # ==========================================
 # DATABÁZOVÉ FUNKCE
 # ==========================================
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zakazky.db')
+
 def nacti_data(pouze_zajimave: bool = False) -> pd.DataFrame:
     conn = None
     try:
-        conn = sqlite3.connect('zakazky.db')
+        conn = sqlite3.connect(DB_PATH)
         if pouze_zajimave:
             df = pd.read_sql_query(
                 """
@@ -215,7 +217,7 @@ def nacti_data(pouze_zajimave: bool = False) -> pd.DataFrame:
 def nacti_top_3() -> pd.DataFrame:
     conn = None
     try:
-        conn = sqlite3.connect('zakazky.db')
+        conn = sqlite3.connect(DB_PATH)
         df = pd.read_sql_query(
             """
             SELECT * FROM nalezene_byty 
@@ -234,13 +236,31 @@ def nacti_top_3() -> pd.DataFrame:
 def nacti_kpi() -> dict:
     conn = None
     try:
-        conn = sqlite3.connect('zakazky.db')
+        conn = sqlite3.connect(DB_PATH)
         cur = conn.cursor()
         cur.execute("SELECT COUNT(*) FROM nalezene_byty")
         celkem = cur.fetchone()[0]
         return {"celkem": celkem}
     except Exception:
         return {"celkem": 0}
+    finally:
+        if conn:
+            conn.close()
+
+def nacti_historii_cen(byt_id: int) -> pd.DataFrame:
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        df = pd.read_sql_query(
+            "SELECT cena, timestamp FROM historie_cen WHERE byt_id=? ORDER BY timestamp ASC",
+            conn, params=(byt_id,)
+        )
+        if not df.empty:
+            df['timestamp'] = pd.to_datetime(df['timestamp'])
+            df.set_index('timestamp', inplace=True)
+        return df
+    except Exception:
+        return pd.DataFrame()
     finally:
         if conn:
             conn.close()
@@ -566,6 +586,11 @@ else:
         """, unsafe_allow_html=True)
 
         with st.expander("🤖 Rozbalit AI analýzu a matematický rozpad výpočtu"):
+            hist_df = nacti_historii_cen(row['id'])
+            if len(hist_df) > 1:
+                st.markdown("**📉 Vývoj ceny v čase**")
+                st.line_chart(hist_df['cena'], use_container_width=True)
+                st.markdown("---")
             st.markdown(zduvodneni)
 
 # ==========================================

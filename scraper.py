@@ -52,7 +52,8 @@ client = Groq(api_key=GROQ_API_KEY)
 # 2. DATABÁZE — Inicializace se schématem v3
 # ==========================================
 def init_db():
-    conn = sqlite3.connect('zakazky.db')
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'zakazky.db')
+    conn = sqlite3.connect(db_path)
     c = conn.cursor()
     c.execute('''
         CREATE TABLE IF NOT EXISTS nalezene_byty (
@@ -69,6 +70,17 @@ def init_db():
             puvodni_cena INTEGER DEFAULT 0
         )
     ''')
+    
+    # Nová tabulka pro sledování historie cen
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS historie_cen (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            byt_id      INTEGER,
+            cena        INTEGER,
+            timestamp   TEXT DEFAULT (datetime('now','localtime'))
+        )
+    ''')
+    
     # Migrace: přidej timestamp sloupec pokud chybí (zpětná kompatibilita)
     for col_sql in [
         "ALTER TABLE nalezene_byty ADD COLUMN timestamp TEXT DEFAULT (datetime('now','localtime'))",
@@ -78,6 +90,12 @@ def init_db():
             c.execute(col_sql)
         except sqlite3.OperationalError:
             pass  # Sloupec už existuje
+            
+    # Pokud je historie cen prázdná, ale máme už nějaké byty, naimportujeme jejich aktuální ceny jako první bod do grafu
+    c.execute("SELECT COUNT(*) FROM historie_cen")
+    if c.fetchone()[0] == 0:
+        c.execute("INSERT INTO historie_cen (byt_id, cena, timestamp) SELECT id, cena, timestamp FROM nalezene_byty")
+        
     conn.commit()
     return conn
 
@@ -211,15 +229,13 @@ def analyzuj_inzerat_groq(nazev: str, popis: str) -> dict | None:
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
             model="llama-3.3-70b-versatile",
-            temperature=0.1
+            temperature=0.1,
+            response_format={"type": "json_object"}
         )
         odpoved = chat_completion.choices[0].message.content.strip()
-        match = re.search(r'\{.*\}', odpoved, re.DOTALL)
-        if match:
-            return json.loads(match.group(0))
-        return None
+        return json.loads(odpoved)
     except Exception as e:
-        print(f"[WARNING] Chyba AI extraktoru: {e}")
+        print(f"[WARNING] Chyba AI extraktoru (JSON): {e}")
         return None
 
 # ==========================================
@@ -566,6 +582,10 @@ def zkontroluj_sreality():
                     "Chrome/125.0.0.0 Safari/537.36"
                 )
             )
+            
+            # Blokování zbytečných datových náloží pro zrychlení a šetření paměti
+            context.route("**/*", lambda route: route.abort() if route.request.resource_type in ["image", "media", "font"] else route.continue_())
+            
             page = context.new_page()
 
             for cislo_stranky in range(1, MAX_PAGES + 1):
@@ -649,6 +669,10 @@ def zkontroluj_sreality():
                                 cursor.execute(
                                     "UPDATE nalezene_byty SET cena=?, puvodni_cena=?, timestamp=? WHERE id=?",
                                     (cena_inzerat, stara_cena, now_ts, byt_id)
+                                )
+                                cursor.execute(
+                                    "INSERT INTO historie_cen (byt_id, cena, timestamp) VALUES (?, ?, ?)",
+                                    (byt_id, cena_inzerat, now_ts)
                                 )
                                 conn.commit()
                                 celkem_zlevnene += 1
@@ -759,6 +783,10 @@ def zkontroluj_sreality():
                             "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                             (byt_id, nazev, cena_inzerat, byt_url, finalni_cena,
                              lokalita_txt, "AI Analýza", chybejici_str, zduvodneni_txt, now_ts, 0)
+                        )
+                        cursor.execute(
+                            "INSERT INTO historie_cen (byt_id, cena, timestamp) VALUES (?, ?, ?)",
+                            (byt_id, cena_inzerat, now_ts)
                         )
                         conn.commit()
                         nove_na_strance += 1
