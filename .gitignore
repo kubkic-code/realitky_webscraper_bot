@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Prostředí
+.env
+venv/
+.venv/
+
+# Databáze (osobní data)
+zakazky.db
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Debug logy a pomocné soubory
+debug_sreality.png
+db_dump.json
+scraper_output.txt
+dump_db.py

@@ -1,0 +1,5 @@
+{
+    "headless": true,
+    "max_pages": 3,
+    "max_bytu_na_stranku": 8
+}

@@ -1,0 +1,34 @@
+{
+    "_komentar": "Průměrné ceny za m² bytu v dané lokalitě (Kč). Uprav dle aktuálního trhu.",
+
+    "praha 1":        160000,
+    "praha 2":        160000,
+    "praha 3":        140000,
+    "praha 5":        140000,
+    "praha 4":        135000,
+    "praha 6":        135000,
+    "praha 7":        130000,
+    "praha 8":        130000,
+    "praha 9":        120000,
+    "praha 10":       120000,
+    "praha":          125000,
+
+    "brno-střed":     105000,
+    "brno-jih":       105000,
+    "brno":            95000,
+
+    "plzeň":           75000,
+    "plzen":           75000,
+    "ostrava":         55000,
+    "olomouc":         70000,
+    "pardubice":       72000,
+    "hradec":          72000,
+    "liberec":         68000,
+    "budějovice":      65000,
+    "budejovice":      65000,
+    "karlovy vary":    62000,
+    "zlín":            60000,
+    "zlin":            60000,
+
+    "_default":        55000
+}
